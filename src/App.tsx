@@ -3,7 +3,7 @@ import './App.css';
 import axios from "axios";
 
 interface Message {
-    text: string;
+    content: string;
     sender: 'user' | 'bot';
 }
 
@@ -13,8 +13,23 @@ const App: React.FC = () => {
     const [input, setInput] = useState<string>('');
 
     useEffect(() => {
+        const getHistory = async () => {
+            try {
+                const history = await axios.get<Message[]>("http://localhost:3001/chat/messages");
+                console.log("History Data" + history.data);
+                setMessages(history.data);
+            } catch (error) {
+                console.error('Error fetching messages:', error);
+            }
+        };
+
+        getHistory();
+    }, []);
+
+    useEffect(() => {
         const getChatResponse = async (message: string) => {
             try {
+
                 const response = await axios.post("http://localhost:3001/chat", {
                     message: message
                 }, {
@@ -37,8 +52,8 @@ const App: React.FC = () => {
         };
 
         if (messages.length > 0 && messages[messages.length - 1].sender === 'user') {
-            getChatResponse(messages[messages.length - 1].text).then(response => {
-                setMessages(prevMessages => [...prevMessages, { text: response, sender: 'bot' }]);
+            getChatResponse(messages[messages.length - 1].content).then(response => {
+                setMessages(prevMessages => [...prevMessages, { content: response, sender: 'bot' }]);
             });
         }
 
@@ -51,7 +66,7 @@ const App: React.FC = () => {
 
     const handleSendMessage = () => {
         if (input.trim() !== '') {
-            const newMessages: Message[] = [...messages, { text: input, sender: 'user' }];
+            const newMessages: Message[] = [...messages, { content: input, sender: 'user' }];
             setMessages(newMessages);
             setInput('');
         }
@@ -62,7 +77,7 @@ const App: React.FC = () => {
             <div className="chat-messages">
                 {messages.map((message, index) => (
                     <div key={index} className={`chat-message ${message.sender}`}>
-                        {message.text}
+                        {message.content}
                     </div>
                 ))}
             </div>
